@@ -13,7 +13,7 @@ It's great for meeting rooms and work environments where other people are able t
 How It Works 
 ------------
 
-This module uses <a href="ihttps://pypi.python.org/pypi/feedparser" target="_blank">feedparser</a> to get item titles and links from any rss feed, and presents the results as simple command-line output.
+This module uses <a href="https://pypi.python.org/pypi/feedparser" target="_blank">feedparser</a> to get item titles and links from any rss feed, and presents the results as simple command-line output.
 
 Feeds are memoized for <tt>feed_memoize_interval</tt> seconds (variable in the <tt>cmdlinenews.py</tt> file) after parsing, with the default being 15 minutes, to prevent unnecessary server requests.
 
