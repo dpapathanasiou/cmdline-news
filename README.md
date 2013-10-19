@@ -36,7 +36,7 @@ What do you want to read? ([enter] to quit)
 
 Input an rss feed url, or the short name of a feed defined in the associated <tt>sites.py</tt> interests dict, and hit return. If the feed is available, you should see a text summary of each numbered entry and link.
 
-For example, here's what <a href="" target="_blank">Hacker News</a> looks like, using the "hn" short name from the interests dict:
+For example, here's what <a href="https://news.ycombinator.com/" target="_blank">Hacker News</a> looks like, using the "hn" short name from the interests dict:
 
 ```
 $ ./cmdlinenews.py
