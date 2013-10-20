@@ -16,11 +16,19 @@ command prompt when this module runs.
 
 """
 
-import feedparser, time, sys
+import feedparser, pycurl, time, sys
 from string import Template
+from cStringIO import StringIO
+from readability.readability import Document
+from BeautifulSoup import BeautifulSoup
+from textwrap import wrap
 from sites import interests
 
-feedparser.USER_AGENT = "cmdline-news/1.0 +http://github.com/dpapathanasiou/cmdline-news"
+PREVIEW_ROWS = 35
+PREVIEW_COLS = 100
+
+UA = "cmdline-news/1.0 +http://github.com/dpapathanasiou/cmdline-news"
+feedparser.USER_AGENT = UA
 
 feed_memo_hash = {} # k=feed url, v=(tuple: timestamp (universal) when feed was fetched, feed content)
 feed_memoize_interval = 900 # 15 minutes
@@ -67,23 +75,57 @@ def item_links (feed_url):
     """Return a list of the item links found in this feed url"""
     return _read_item_data(feed_url, lambda x: x.link)
 
-output_format = Template("""  $num.\t$title
-  \t$link
-""")
+def load_url (url):
+    """Attempt to load the url using pycurl and return the data (which is None if unsuccessful)"""
+
+    data = None
+    databuffer = StringIO()
+
+    curl = pycurl.Curl()
+    curl.setopt(pycurl.URL, url)
+    curl.setopt(pycurl.FOLLOWLOCATION, 1)
+    curl.setopt(pycurl.WRITEFUNCTION, databuffer.write)
+    curl.setopt(pycurl.USERAGENT, UA)
+    try:
+        curl.perform()
+        data = databuffer.getvalue()
+    except:
+        pass
+    curl.close()
+
+    return data
+
+output_format = Template("""
+  $num.\t$title
+  \t$link""")
 
 def get_items (feed_url):
-    """Get the item titles and links from this feed_url and display them according to output_format in stdout"""
+    """Get the item titles and links from this feed_url, display them according to output_format in stdout,
+    and return a dict of item number and item url, to allow someone to drill down to a specific article."""
+
     titles = filter(None, item_titles(feed_url))
     links  = filter(None, item_links(feed_url))
 
     if len(titles) == 0 or len(links) == 0:
         print "Sorry, there's nothing available right now at", feed_url
 
+    output = []
+    posts = {} # k=item number (starting at 1), v=item url
     for i, title in enumerate(titles):
         try:
-            print output_format.substitute(num=(i+1), title=title, link=links[i])
+            output.append(output_format.substitute(num=(i+1), title=title, link=links[i]))
+            posts[(i+1)] = str(links[i])
         except KeyError:
             pass
+    return u'\n'.join(output), posts
+
+def get_article (url):
+    """Fetch the html found at url and use the readability algorithm to return just the text content"""
+
+    html = load_url(url)
+    if html is not None:
+        clean_html = Document(html).summary(html_partial=True).replace('&amp;', u'&').replace(u'&#13;', u'\n')
+        return BeautifulSoup(clean_html).getText(separator=u' ').replace(u'  ', u' ')
 
 def get_news ():
     """Create an interactive user prompt to get the feed name or url to fetch and display"""
@@ -94,10 +136,34 @@ def get_news ():
             break
         else:
             if interests.has_key(feed):
-                get_items( interests[feed] )
+                menu, links = get_items( interests[feed] )
             else:
                 # try interpreting the stdin typed by the user as a url
-                get_items(feed)
+                menu, links = get_items(feed)
+            print menu
+            if len(links) > 0:
+                while True:
+                    options = links.keys()
+                    print "Which article do you want to see? (%d-%d, 0 for the menu, or [enter] for none) " % (min(options), max(options)),
+                    try:
+                        choice = int(sys.stdin.readline().rstrip().lstrip())
+                        if choice in options:
+                            article = get_article(links[choice])
+                            if article is not None:
+                                for i, line in enumerate(wrap(article, PREVIEW_COLS)):
+                                    if i > 0 and i % PREVIEW_ROWS == 0:
+                                        print '\t--- more --- [enter to continue]',
+                                        keypress = sys.stdin.readline() # waiting for just a single key press is surprisingly complex: http://stackoverflow.com/a/510364
+                                    print '\t', line
+                            else:
+                                print "Sorry, there is no content at", links[choice]
+                        else:
+                            if choice == 0:
+                                print menu
+                            else:
+                                print "Please choose between (%d-%d)" % (min(options), max(options))
+                    except ValueError:
+                        break
             
 if __name__ == "__main__":
     get_news()
