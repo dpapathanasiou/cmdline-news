@@ -114,7 +114,7 @@ def get_items (feed_url):
     for i, title in enumerate(titles):
         try:
             output.append(output_format.substitute(num=(i+1), title=title, link=links[i]))
-            posts[(i+1)] = str(links[i])
+            posts[(i+1)] = unicode(links[i])
         except KeyError:
             pass
     return u'\n'.join(output), posts
