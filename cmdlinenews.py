@@ -97,7 +97,8 @@ def load_url (url):
 
 output_format = Template("""
   $num.\t$title
-  \t$link""")
+  \t$link
+""")
 
 def get_items (feed_url):
     """Get the item titles and links from this feed_url, display them according to output_format in stdout,
@@ -114,10 +115,10 @@ def get_items (feed_url):
     for i, title in enumerate(titles):
         try:
             output.append(output_format.substitute(num=(i+1), title=title, link=links[i]))
-            posts[(i+1)] = unicode(links[i])
+            posts[(i+1)] = str(links[i].encode('utf-8'))
         except KeyError:
             pass
-    return u'\n'.join(output), posts
+    return u''.join(output), posts
 
 def get_article (url):
     """Fetch the html found at url and use the readability algorithm to return just the text content"""
