@@ -42,35 +42,35 @@ For example, here's what <a href="https://news.ycombinator.com/" target="_blank"
 $ ./cmdlinenews.py
 What do you want to read? ([enter] to quit) hn
  
-  1.	Review of the DSM-V as a piece of dystopian fiction
-  	http://thenewinquiry.com/essays/book-of-lamentations/
+  1.  Review of the DSM-V as a piece of dystopian fiction
+      http://thenewinquiry.com/essays/book-of-lamentations/
 
-  2.	What happens when you're #1 on Hacker News for a day
-  	http://levels.io/hacker-news-number-one/
+  2.  What happens when you're #1 on Hacker News for a day
+      http://levels.io/hacker-news-number-one/
 
-  3.	From China, With Love
-  	http://devttys0.com/2013/10/from-china-with-love/
+  3.  From China, With Love
+      http://devttys0.com/2013/10/from-china-with-love/
 
-  4.	Oscilloscope watch
-  	http://www.kickstarter.com/projects/920064946/oscilloscope-watch?ref=card
+  4.  Oscilloscope watch
+      http://www.kickstarter.com/projects/920064946/oscilloscope-watch?ref=card
 
-  5.	Startup School 2013 Notes
-  	https://docs.google.com/document/d/1Xo99mjzc4nyK3J4_GBiba_Kz4h1NPL2Os06JhvbCh5c/
+  5.  Startup School 2013 Notes
+      https://docs.google.com/document/d/1Xo99mjzc4nyK3J4_GBiba_Kz4h1NPL2Os06JhvbCh5c/
 
-  6.	Startup School 2013 – Live Stream
-  	http://startupschool.org/watch.html
+  6.  Startup School 2013 – Live Stream
+      http://startupschool.org/watch.html
 
-  7.	Brooklyn man arrested for flying drone over Manhattan
-  	http://abclocal.go.com/wabc/story?section=news/investigators&id=9292217
+  7.  Brooklyn man arrested for flying drone over Manhattan
+      http://abclocal.go.com/wabc/story?section=news/investigators&id=9292217
 
-  8.	Happy 19th birthday, Cocoa
-  	http://blog.securemacprogramming.com/?p=1115
+  8.  Happy 19th birthday, Cocoa
+      http://blog.securemacprogramming.com/?p=1115
 
-  9.	Microsoft blames Google and makes 'adjustments' to IE11 on Windows 8.1
-  	http://thenextweb.com/microsoft/2013/10/19/microsoft-blames-google-makes-adjustments-ie11-windows-8-1-renders-search-engine-correctly/
+  9.  Microsoft blames Google and makes 'adjustments' to IE11 on Windows 8.1
+      http://thenextweb.com/microsoft/2013/10/19/microsoft-blames-google-makes-adjustments-ie11-windows-8-1-renders-search-engine-correctly/
 
-  10.	Young adults hardly ever walk, 'because of technology'
-  	http://news.cnet.com/8301-17852_3-57608303-71/young-adults-hardly-ever-walk-because-of-technology/
+  10. Young adults hardly ever walk, 'because of technology'
+      http://news.cnet.com/8301-17852_3-57608303-71/young-adults-hardly-ever-walk-because-of-technology/
 
 ...
 ```
