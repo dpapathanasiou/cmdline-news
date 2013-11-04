@@ -16,7 +16,11 @@ command prompt when this module runs.
 
 """
 
-import feedparser, pycurl, time, sys
+import feedparser
+import pycurl
+import time 
+import sys
+import curses
 from string import Template
 from cStringIO import StringIO
 from readability.readability import Document
@@ -24,46 +28,64 @@ from BeautifulSoup import BeautifulSoup
 from textwrap import wrap
 from sites import interests
 
-PREVIEW_ROWS = 35
-PREVIEW_COLS = 100
-
 UA = "cmdline-news/1.0 +http://github.com/dpapathanasiou/cmdline-news"
 feedparser.USER_AGENT = UA
 
-feed_memo_hash = {} # k=feed url, v=(tuple: timestamp (universal) when feed was fetched, feed content)
-feed_memoize_interval = 900 # 15 minutes
+FEED_MEMO_HASH = {} # k=feed url, v=(tuple: timestamp feed was fetched, content)
+FEED_MEMOIZE_INTERVAL = 900 # 15 minutes
+
+WINDOW_COLS = 80
+WINDOW_ROWS = 40
+
+def initscr(screen):
+    """Use the curses library to get the terminal row + column size"""
+
+    global WINDOW_COLS, WINDOW_ROWS
+
+    screen.refresh()
+    win = curses.newwin(0, 0)
+    WINDOW_ROWS, WINDOW_COLS = win.getmaxyx()
+
+try:
+    curses.wrapper(initscr) 
+except curses.error:
+    pass
 
 def purge_expired (data_hash, interval):
-    """Remove everything in the given hash if it has exceeded the given time interval"""
+    """Remove everything in the given hash if it has exceeded
+    the given time interval"""
     expired = []
-    for k, v in data_hash.items():
-        set_time = v[0]
+    for key, val in data_hash.items():
+        set_time = val[0]
         if (time.time() - set_time) > interval:
-            expired.append(k)
+            expired.append(key)
     for ex_k in expired:
         del data_hash[ex_k]
 
-def parse_feed (url, interval=feed_memoize_interval):
-    """Retrieve and parse the contents of the given feed url, unless it has already been memoized within the accepted interval"""
-    purge_expired(feed_memo_hash, interval)
-    if feed_memo_hash.has_key(url):
-        return feed_memo_hash[url][1]
+def parse_feed (url, interval=FEED_MEMOIZE_INTERVAL):
+    """Retrieve and parse the contents of the given feed url,
+    unless it has already been memoized within the accepted interval"""
+    purge_expired(FEED_MEMO_HASH, interval)
+    if FEED_MEMO_HASH.has_key(url):
+        return FEED_MEMO_HASH[url][1]
     else:
         feed = feedparser.parse(url)
         if feed:
             if feed.version and len(feed.version) > 0:
-                feed_memo_hash[url] = ( time.time(), feed )
+                FEED_MEMO_HASH[url] = ( time.time(), feed )
                 return feed
 
 def _read_item_data (feed_url, get_fn):
-    """Return a list of item data (specified by the get_fn) found in this feed url"""
+    """Return a list of item data (specified by the get_fn)
+    found in this feed url"""
     data = []
     feed = parse_feed(feed_url)
     if feed is not None:
-        for e in feed.entries:
+        for entry in feed.entries:
             try:
-                data.append(get_fn(e))
+                data.append(get_fn(entry))
             except AttributeError, detail:
+                print >> sys.stderr, detail
                 data.append(None)
     return data
 
@@ -76,7 +98,8 @@ def item_links (feed_url):
     return _read_item_data(feed_url, lambda x: x.link)
 
 def load_url (url):
-    """Attempt to load the url using pycurl and return the data (which is None if unsuccessful)"""
+    """Attempt to load the url using pycurl and return the data
+    (which is None if unsuccessful)"""
 
     data = None
     databuffer = StringIO()
@@ -95,14 +118,16 @@ def load_url (url):
 
     return data
 
-output_format = Template("""
+OUTPUT_FORMAT = Template("""
   $num.\t$title
   \t$link
 """)
 
 def get_items (feed_url):
-    """Get the item titles and links from this feed_url, display them according to output_format in stdout,
-    and return a dict of item number and item url, to allow someone to drill down to a specific article."""
+    """Get the item titles and links from this feed_url,
+    display them according to OUTPUT_FORMAT in stdout,
+    and return a dict of item number and item url,
+    to allow someone to drill down to a specific article."""
 
     titles = filter(None, item_titles(feed_url))
     links  = filter(None, item_links(feed_url))
@@ -114,57 +139,115 @@ def get_items (feed_url):
     posts = {} # k=item number (starting at 1), v=item url
     for i, title in enumerate(titles):
         try:
-            output.append(output_format.substitute(num=(i+1), title=title, link=links[i]))
+            output.append(OUTPUT_FORMAT.substitute(num=(i+1),
+                                                   title=title,
+                                                   link=links[i]))
             posts[(i+1)] = str(links[i].encode('utf-8'))
         except KeyError:
             pass
     return u''.join(output), posts
 
 def get_article (url):
-    """Fetch the html found at url and use the readability algorithm to return just the text content"""
+    """Fetch the html found at url and use the readability algorithm
+    to return just the text content"""
 
     html = load_url(url)
     if html is not None:
-        clean_html = Document(html).summary(html_partial=True).replace('&amp;', u'&').replace(u'&#13;', u'\n')
-        return BeautifulSoup(clean_html).getText(separator=u' ').replace(u'  ', u' ')
+        doc_html = Document(html).summary(html_partial=True)
+        clean_html = doc_html.replace('&amp;', u'&').replace(u'&#13;', u'\n')
+        return BeautifulSoup(clean_html).getText(separator=u' ')
+#.replace(u'  ', u' ')
+
+def prompt_user (prompt):
+    """Display a message to the user and wait for a reply,
+    returning the text string of the reply."""
+
+    print prompt,
+    reply = sys.stdin.readline().rstrip().lstrip()
+    return reply
+
+def scroll_output (data,
+                   rows=(WINDOW_ROWS-1),
+                   cols=WINDOW_COLS,
+                   prompt='\t--- more --- [enter to continue] ',
+                   wrap_data=True,
+                   choice_fn=None):
+    """Print the data to the screen, pausing when the number of lines
+    meets the total size of the screen in rows. If choice_fn is defined,
+    it is invoked with the user reply to the prompt as input."""
+
+    if wrap_data:
+        lines = wrap(data, cols)
+    else:
+        lines = data.splitlines()
+
+    for i, line in enumerate(lines):
+        if i > 0 and i % rows == 0:
+            user_choice = prompt_user(prompt)
+            if choice_fn is not None:
+                if choice_fn(user_choice):
+                    break
+        print line
 
 def get_news ():
-    """Create an interactive user prompt to get the feed name or url to fetch and display"""
+    """Create an interactive user prompt to get the feed name
+    or url to fetch and display"""
+
+    option_prompt = '\t--- more --- [enter to continue, or # to read] '
+    no_content = 'Sorry, there is no content at'
+
     while True:
-        print "What do you want to read? ([enter] to quit) ",
-        feed = sys.stdin.readline().rstrip().lstrip().lower()
+        feed = prompt_user("What do you want to read? ([enter] to quit) ")
         if len(feed) == 0:
             break
         else:
-            if interests.has_key(feed):
-                menu, links = get_items( interests[feed] )
+            if interests.has_key(feed.lower()):
+                menu, links = get_items( interests[feed.lower()] )
             else:
                 # try interpreting the stdin typed by the user as a url
                 menu, links = get_items(feed)
-            print menu
-            if len(links) > 0:
-                while True:
-                    options = links.keys()
-                    print "Which article do you want to see? (%d-%d, 0 for the menu, or [enter] for none) " % (min(options), max(options)),
-                    try:
-                        choice = int(sys.stdin.readline().rstrip().lstrip())
-                        if choice in options:
-                            article = get_article(links[choice])
-                            if article is not None:
-                                for i, line in enumerate(wrap(article, PREVIEW_COLS)):
-                                    if i > 0 and i % PREVIEW_ROWS == 0:
-                                        print '\t--- more --- [enter to continue]',
-                                        keypress = sys.stdin.readline() # waiting for just a single key press is surprisingly complex: http://stackoverflow.com/a/510364
-                                    print '\t', line
-                            else:
-                                print "Sorry, there is no content at", links[choice]
+
+            options = links.keys()
+            bad_option = "Please choose between (%d-%d)" % (min(options),
+                                                            max(options))
+
+            def _display_article (user_choice):
+                """An inner function which captures the current feed 
+                links in a closure, and fetches the user-chosen link
+                for display using scroll_article()"""
+
+                break_menu = False
+
+                try:
+                    choice = int(user_choice)
+                    if choice in options:
+                        article = get_article(links[choice])
+                        if article is not None:
+                            scroll_output(article)
+                            break_menu = True
                         else:
-                            if choice == 0:
-                                print menu
-                            else:
-                                print "Please choose between (%d-%d)" % (min(options), max(options))
-                    except ValueError:
-                        break
+                            print no_content, links[choice]
+                    else:
+                        print bad_option
+                except ValueError:
+                    pass
+
+                return break_menu
+
+            scroll_output(menu,
+                          wrap_data=False,
+                          prompt=option_prompt,
+                          choice_fn=_display_article)
+
+            while True:
+                choice = prompt_user(
+                    "Which article do you want to see? "\
+                    "(%d-%d, or [enter] for none) "
+                    % (min(options), max(options)))
+                if 0 == len(choice):
+                    break
+                if _display_article(choice):
+                    break
             
 if __name__ == "__main__":
     get_news()
