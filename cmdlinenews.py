@@ -155,8 +155,7 @@ def get_article (url):
     if html is not None:
         doc_html = Document(html).summary(html_partial=True)
         clean_html = doc_html.replace('&amp;', u'&').replace(u'&#13;', u'\n')
-        return BeautifulSoup(clean_html).getText(separator=u' ')
-#.replace(u'  ', u' ')
+        return BeautifulSoup(clean_html).getText(separator=u' ').replace(u'  ', u' ')
 
 def prompt_user (prompt):
     """Display a message to the user and wait for a reply,
@@ -177,7 +176,10 @@ def scroll_output (data,
     it is invoked with the user reply to the prompt as input."""
 
     if wrap_data:
-        lines = wrap(data, cols)
+        margin = u' ' * (cols/4)
+        lines = []
+        for line in wrap(data, cols/2):
+            lines.append( margin + line )
     else:
         lines = data.splitlines()
 
