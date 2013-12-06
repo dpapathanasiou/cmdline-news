@@ -93,9 +93,19 @@ def item_titles (feed_url):
     """Return a list of the item titles found in this feed url"""
     return _read_item_data(feed_url, lambda x: x.title)
 
-def item_links (feed_url):
+def strip_url_parameters (url):
+    """Remove any client or user parameters from this url, and return
+    the string without them (it leaves urls w/o parameters as-is)"""
+    return url.split('?')[0]
+
+def item_links (feed_url, strip_parameters=True):
     """Return a list of the item links found in this feed url"""
-    return _read_item_data(feed_url, lambda x: x.link)
+    links = _read_item_data(feed_url, lambda x: x.link)
+    print links
+    if strip_parameters:
+        return map(strip_url_parameters, links)
+    else:
+        return links
 
 def load_url (url):
     """Attempt to load the url using pycurl and return the data
@@ -109,11 +119,13 @@ def load_url (url):
     curl.setopt(pycurl.FOLLOWLOCATION, 1)
     curl.setopt(pycurl.WRITEFUNCTION, databuffer.write)
     curl.setopt(pycurl.USERAGENT, UA)
+    #curl.setopt(pycurl.REFERER, "https://twitter.com/nytimes")
     try:
         curl.perform()
         data = databuffer.getvalue()
-    except:
-        pass
+    except Exception, e:
+        #pass
+        print e, e.message
     curl.close()
 
     return data
@@ -191,6 +203,32 @@ def scroll_output (data,
                     break
         print line
 
+FEED_MENU_HEADER = """
+  Code\t\tDescription
+  ----\t\t-----------
+"""
+
+FEED_MENU_FORMAT = Template("""
+  $code\t\t$desc""")
+
+def show_feed_menu ():
+    """Use the content of the interests dict (imported from the sites.py
+    file) to present a menu of codes and descriptions, if available"""
+    if len(interests) == 0:
+        print "Sorry, no feeds defined\nPlease edit the interests dict in the sites.py file\n"
+    else:
+        menu_options = []
+        for code, feed_data in interests.items():
+            if feed_data.has_key('url'):
+                feed_desc = feed_data['url'] # default to display
+                if feed_data.has_key('desc'):
+                    feed_desc=feed_data['desc']
+                menu_options.append( FEED_MENU_FORMAT.substitute(code=code, desc=feed_desc) )
+
+        scroll_output( u''.join([FEED_MENU_HEADER,
+                                 u''.join(menu_options)]),
+                       wrap_data=False )
+
 def get_news ():
     """Create an interactive user prompt to get the feed name
     or url to fetch and display"""
@@ -199,12 +237,14 @@ def get_news ():
     no_content = 'Sorry, there is no content at'
 
     while True:
-        feed = prompt_user("What do you want to read? ([enter] to quit) ")
+        feed = prompt_user("Which feed do you want to read? Input code (! for menu, [enter] to quit) ")
         if len(feed) == 0:
             break
+        elif "!" == feed:
+            show_feed_menu()
         else:
             if interests.has_key(feed.lower()):
-                menu, links = get_items( interests[feed.lower()] )
+                menu, links = get_items( interests[feed.lower()]['url'] )
             else:
                 # try interpreting the stdin typed by the user as a url
                 menu, links = get_items(feed)
