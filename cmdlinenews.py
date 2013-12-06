@@ -98,16 +98,15 @@ def strip_url_parameters (url):
     the string without them (it leaves urls w/o parameters as-is)"""
     return url.split('?')[0]
 
-def item_links (feed_url, strip_parameters=True):
+def item_links (feed_url, strip_parameters):
     """Return a list of the item links found in this feed url"""
     links = _read_item_data(feed_url, lambda x: x.link)
-    print links
     if strip_parameters:
         return map(strip_url_parameters, links)
     else:
         return links
 
-def load_url (url):
+def load_url (url, referrer=None):
     """Attempt to load the url using pycurl and return the data
     (which is None if unsuccessful)"""
 
@@ -119,7 +118,8 @@ def load_url (url):
     curl.setopt(pycurl.FOLLOWLOCATION, 1)
     curl.setopt(pycurl.WRITEFUNCTION, databuffer.write)
     curl.setopt(pycurl.USERAGENT, UA)
-    #curl.setopt(pycurl.REFERER, "https://twitter.com/nytimes")
+    if referrer is not None:
+        curl.setopt(pycurl.REFERER, referrer)
     try:
         curl.perform()
         data = databuffer.getvalue()
@@ -135,14 +135,14 @@ OUTPUT_FORMAT = Template("""
   \t$link
 """)
 
-def get_items (feed_url):
+def get_items (feed_url, strip_parameters=True):
     """Get the item titles and links from this feed_url,
     display them according to OUTPUT_FORMAT in stdout,
     and return a dict of item number and item url,
     to allow someone to drill down to a specific article."""
 
     titles = filter(None, item_titles(feed_url))
-    links  = filter(None, item_links(feed_url))
+    links  = filter(None, item_links(feed_url, strip_parameters))
 
     if len(titles) == 0 or len(links) == 0:
         print "Sorry, there's nothing available right now at", feed_url
@@ -159,11 +159,11 @@ def get_items (feed_url):
             pass
     return u''.join(output), posts
 
-def get_article (url):
+def get_article (url, referrer=None):
     """Fetch the html found at url and use the readability algorithm
     to return just the text content"""
 
-    html = load_url(url)
+    html = load_url(url, referrer)
     if html is not None:
         doc_html = Document(html).summary(html_partial=True)
         clean_html = doc_html.replace('&amp;', u'&').replace(u'&#13;', u'\n')
@@ -243,53 +243,65 @@ def get_news ():
         elif "!" == feed:
             show_feed_menu()
         else:
-            if interests.has_key(feed.lower()):
-                menu, links = get_items( interests[feed.lower()]['url'] )
-            else:
+            feed_referrer = None
+            try:
+                feed_data = interests[feed.lower()]
+                feed_url  = feed_data['url']
+                strip_parameters = True
+                if feed_data.has_key('strip_url_parameters'):
+                    strip_parameters = feed_data['strip_url_parameters']
+                if feed_data.has_key('referrer'):
+                    feed_referrer = feed_data['referrer']
+                menu, links = get_items (feed_url, strip_parameters)
+            except KeyError:
                 # try interpreting the stdin typed by the user as a url
                 menu, links = get_items(feed)
 
-            options = links.keys()
-            bad_option = "Please choose between (%d-%d)" % (min(options),
-                                                            max(options))
+            if len(links) == 0:
+                print no_content, feed
+                break
+            else:
+                options = links.keys()
+                bad_option = "Please choose between (%d-%d)" % (min(options),
+                                                                max(options))
 
-            def _display_article (user_choice):
-                """An inner function which captures the current feed 
-                links in a closure, and fetches the user-chosen link
-                for display using scroll_article()"""
+                def _display_article (user_choice):
+                    """An inner function which captures the current feed 
+                    links in a closure, and fetches the user-chosen link
+                    for display using scroll_article()"""
 
-                break_menu = False
+                    break_menu = False
 
-                try:
-                    choice = int(user_choice)
-                    if choice in options:
-                        article = get_article(links[choice])
-                        if article is not None:
-                            scroll_output(article)
-                            break_menu = True
+                    try:
+                        choice = int(user_choice)
+                        if choice in options:
+                            article = get_article(links[choice], feed_referrer)
+                            if article is not None:
+                                scroll_output(article)
+                                break_menu = True
+                            else:
+                                print no_content, links[choice]
                         else:
-                            print no_content, links[choice]
-                    else:
-                        print bad_option
-                except ValueError:
-                    pass
+                            print bad_option
+                    except ValueError:
+                        pass
 
-                return break_menu
+                    return break_menu
 
-            scroll_output(menu,
-                          wrap_data=False,
-                          prompt=option_prompt,
-                          choice_fn=_display_article)
+                scroll_output(menu,
+                              wrap_data=False,
+                              prompt=option_prompt,
+                              choice_fn=_display_article)
 
-            while True:
-                choice = prompt_user(
-                    "Which article do you want to see? "\
-                    "(%d-%d, or [enter] for none) "
-                    % (min(options), max(options)))
-                if 0 == len(choice):
-                    break
-                if _display_article(choice):
-                    break
+                while True:
+                    choice = prompt_user(
+                        "Which article do you want to see? "\
+                        "(%d-%d, or [enter] for none) "
+                        % (min(options), max(options)))
+                    if 0 == len(choice):
+                        break
+                    if _display_article(choice):
+                        break
             
 if __name__ == "__main__":
     get_news()
