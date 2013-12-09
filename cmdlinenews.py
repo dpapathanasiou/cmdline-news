@@ -116,16 +116,18 @@ def load_url (url, referrer=None):
     curl = pycurl.Curl()
     curl.setopt(pycurl.URL, url)
     curl.setopt(pycurl.FOLLOWLOCATION, 1)
+    curl.setopt(pycurl.CONNECTTIMEOUT, 5)
+    curl.setopt(pycurl.TIMEOUT, 8)
     curl.setopt(pycurl.WRITEFUNCTION, databuffer.write)
     curl.setopt(pycurl.USERAGENT, UA)
+    curl.setopt(pycurl.COOKIEFILE, '')
     if referrer is not None:
         curl.setopt(pycurl.REFERER, referrer)
     try:
         curl.perform()
         data = databuffer.getvalue()
-    except Exception, e:
-        #pass
-        print e, e.message
+    except Exception:
+        pass
     curl.close()
 
     return data
@@ -203,31 +205,20 @@ def scroll_output (data,
                     break
         print line
 
-FEED_MENU_HEADER = """
-  Code\t\tDescription
-  ----\t\t-----------
-"""
-
-FEED_MENU_FORMAT = Template("""
-  $code\t\t$desc""")
-
 def show_feed_menu ():
     """Use the content of the interests dict (imported from the sites.py
     file) to present a menu of codes and descriptions, if available"""
     if len(interests) == 0:
         print "Sorry, no feeds defined\nPlease edit the interests dict in the sites.py file\n"
     else:
-        menu_options = []
+        print '\n{0:10} ==> '.format('Code'), 'Description'
+        print '{0:10}     '.format('----'), '-----------\n'
         for code, feed_data in interests.items():
             if feed_data.has_key('url'):
                 feed_desc = feed_data['url'] # default to display
                 if feed_data.has_key('desc'):
                     feed_desc=feed_data['desc']
-                menu_options.append( FEED_MENU_FORMAT.substitute(code=code, desc=feed_desc) )
-
-        scroll_output( u''.join([FEED_MENU_HEADER,
-                                 u''.join(menu_options)]),
-                       wrap_data=False )
+                print '{0:10} ==> '.format(code), feed_desc
 
 def get_news ():
     """Create an interactive user prompt to get the feed name

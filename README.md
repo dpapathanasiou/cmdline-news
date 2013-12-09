@@ -15,7 +15,7 @@ How It Works
 
 This module uses <a href="https://pypi.python.org/pypi/feedparser" target="_blank">feedparser</a> to get item titles and links from any rss feed, and presents the results as simple command-line output.
 
-Feeds are memoized for <tt>feed_memoize_interval</tt> seconds (variable in the <tt>cmdlinenews.py</tt> file) after parsing, with the default being 15 minutes, to prevent unnecessary server requests.
+Feeds are memoized for <tt>feed_memoize_interval</tt> seconds (variable in the [cmdlinenews.py](cmdlinenews.py) file) after parsing, with the default being 15 minutes, to prevent unnecessary server requests.
 
 Usage
 -----
@@ -31,46 +31,68 @@ $ ./cmdlinenews.py
 You will be greeted with this prompt:
 
 ```
-What do you want to read? ([enter] to quit) 
+Which feed do you want to read? Input code (! for menu, [enter] to quit) 
 ```
 
-Input an rss feed url, or the short name of a feed defined in the associated <tt>sites.py</tt> interests dict, and hit return. If the feed is available, you should see a text summary of each numbered entry and link.
+Type <tt>!</tt> to see the menu of feeds defined in the associated [sites.py](sites.py) interests dict, which produces a menu like this:
 
-For example, here's what <a href="https://news.ycombinator.com/" target="_blank">Hacker News</a> looks like, using the "hn" short name from the interests dict:
+``` 
+Code       ==>  Description
+----            -----------
+
+reddit     ==>  My Reddits (Tech, Japan, Aikido, Data is Beautiful)
+zerohedge  ==>  ZeroHedge
+bbc        ==>  BBC News
+nyt        ==>  http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml
+hn         ==>  Hacker News
+alpha      ==>  Seeking Alpha Editor's Picks
+mta        ==>  FakeMTA's tweets
+
+```
+
+Edit the [sites.py](sites.py) interests dict with your favorite rss feeds for convenience. Check out <a href="http://www.wired.com/magazine/2013/08/101signals/" target="_blank">http://www.wired.com/magazine/2013/08/101signals/</a> for ideas of interesting sites.
+
+Input the short name code of a feed defined in the associated [sites.py](sites.py) interests dict, and hit return. If the feed is available, you should see a text summary of each numbered entry and link.
+
+For example, here's what <a href="https://news.ycombinator.com/" target="_blank">Hacker News</a> looks like, using the "hn" code from the menu:
 
 ```
 $ ./cmdlinenews.py
-What do you want to read? ([enter] to quit) hn
+Which feed do you want to read? Input code (! for menu, [enter] to quit) hn
  
-  1.  Review of the DSM-V as a piece of dystopian fiction
-      http://thenewinquiry.com/essays/book-of-lamentations/
+  1.	Facebook's AI lab
+  	https://www.facebook.com/yann.lecun/posts/10151728212367143
 
-  2.  What happens when you're #1 on Hacker News for a day
-      http://levels.io/hacker-news-number-one/
+  2.	'The Mother of All Demos' Is 45 Years Old, Doesn't Look a Day Over 25
+  	http://www.theatlantic.com/technology/archive/2013/12/the-mother-of-all-demos-is-45-years-old-doesnt-look-a-day-over-25/282152/
 
-  3.  From China, With Love
-      http://devttys0.com/2013/10/from-china-with-love/
+  3.	Employee Retention
+  	http://blog.samaltman.com/employee-retention
 
-  4.  Oscilloscope watch
-      http://www.kickstarter.com/projects/920064946/oscilloscope-watch?ref=card
+  4.	CheapAir accepts Bitcoin
+  	http://www.cheapair.com/blog/travel-news/book-your-flights-on-cheapair-with-bitcoin-virtual-currency/
 
-  5.  Startup School 2013 Notes
-      https://docs.google.com/document/d/1Xo99mjzc4nyK3J4_GBiba_Kz4h1NPL2Os06JhvbCh5c/
+...
+```
 
-  6.  Startup School 2013 – Live Stream
-      http://startupschool.org/watch.html
+You can also use an rss feed url *not* defined in the [sites.py](sites.py) interests dict; in that case, just type the complete url (starting with <tt>http://</tt>) at this prompt.
 
-  7.  Brooklyn man arrested for flying drone over Manhattan
-      http://abclocal.go.com/wabc/story?section=news/investigators&id=9292217
+For example, you can access <tt>http://www.lessig.org/feed/</tt> like this:
 
-  8.  Happy 19th birthday, Cocoa
-      http://blog.securemacprogramming.com/?p=1115
+```
+Which feed do you want to read? Input code (! for menu, [enter] to quit) http://www.lessig.org/feed/
+ 
+  1.	So how exactly does one train for this?
+  	http://www.lessig.org/2013/12/so-how-exactly-does-one-train-for-this/
 
-  9.  Microsoft blames Google and makes 'adjustments' to IE11 on Windows 8.1
-      http://thenextweb.com/microsoft/2013/10/19/microsoft-blames-google-makes-adjustments-ie11-windows-8-1-renders-search-engine-correctly/
+  2.	So the march is on. Fifteen years after Granny D started her…
+  	http://www.lessig.org/2013/12/so-the-march-is-on-fifteen-years-after-granny-d-started-her/
 
-  10. Young adults hardly ever walk, 'because of technology'
-      http://news.cnet.com/8301-17852_3-57608303-71/young-adults-hardly-ever-walk-because-of-technology/
+  3.	Hey, Lessig Blog, v2 turned 4 today! Please celebrate by singing…
+  	http://www.lessig.org/2013/12/hey-lessig-blog-v2-turned-4-today-please-celebrate-by-singing/
+
+  4.	Millions around the world suffer because of ignorance….
+  	http://www.lessig.org/2013/11/millions-around-the-world-suffer-because-of-ignorance/
 
 ...
 ```
@@ -80,46 +102,27 @@ If you want to read a specific article, input its number at the next prompt.
 The program fetches the html from the article url, and uses <a href="https://pypi.python.org/pypi/readability-lxml" target="_blank">readability-lxml</a> plus <a href="http://www.crummy.com/software/BeautifulSoup/" target="_blank">Beautiful Soup</a> to return the content as plain text:
 
 ```
-Which article do you want to see? (1-30, 0 for the menu, or [enter] for none) 1
- 	 Vincent van Gogh Corridor in the Asylum (1889) TNI Vol. 21: Witches is out now. Subscribe now for
-	$2 and get it today. A new dystopian novel in the classic mode takes the form of a dictionary of
-	madness The best dystopian literature, or at least the most effective, manages to show us a hideous
-	and contorted future while resisting the temptation to point fingers and invent villains. This is
-	one of the major flaws in George Orwells’s 1984 : When O’Brien laughingly expounds on his vision of
-	“a boot stamping on a human face – forever” he starts to acquire the ludicrousness of a Bond
-	villain; he may as well be a cartoon – one of the Krusty Kamp counsellors in The Simpsons , raising
-	a glass “to Evil.” Orwell’s satire of Stalinism, or Margaret Atwood’s on the religious right in The
-	Handmaid’s Tale tend to let our present world off the hook a little by comparison. More subtle
-	works, like Huxley’s Brave New World , are far more effective. His Controller, when interrogated,
-	doesn’t burst out in maniacal laughter and start twiddling his moustache. He explains, in quite
-	reasonable terms, why the dystopia he lives in is the best way to ensure the happiness of all – and
-	he means it. Everything’s broken, but it’s not anyone’s fault; it’s terrifying because it’s so
-	familiar. American Psychiatric Association DSM-5 American Psychiatric Publishing (991 pages) Great
-	dystopia isn’t so much fantasy as a kind of estrangement or dislocation from the present; the
-	ability to stand outside time and see the situation in its full hideousness. The dystopian novel
-	doesn’t necessarily have to be a novel. Maybe the greatest piece of dystopian literature ever
-	written is Theodor Adorno’s Minima Moralia , a collection of observations and aphorisms penned by
-	the philosopher while in exile in America during and after the Second World War. Even if, like I do,
-	you disagree enthusiastically with his blanket condemnation of all “degenerated” popular culture,
-	it’s hard not to be convinced that what we are living is “damaged life.” It’s not an argument so
-	much as revelation. In Adorno’s bitterly lucid critique everything we take for “The libidinal
-	achievements demanded of an individual behaving as healthy in body and mind are such as can be
-	performed only at the cost of the profoundest mutilation … the regular guy, the popular girl, have
-	to repress not only their desires and insights, but even the symptoms that in bourgeois times
-	resulted from repression.” – Minima Moralia granted is suddenly revealed in all its hideousness. The
-	world Adorno lives in isn’t quite the same as ours; he’s coming at his subjects from a reflex angle
-	– they’re a bunch of average Joes and Janes, he’s a misanthropic German cultural theorist with a
-	preternaturally spherical head – but his insights are all the more relevant because of this.
-	Something has gone terribly wrong in the world; we are living the wrong life, a life without any
-	real fulfillment. The newly published DSM-5 is a classic dsytopian novel in this mold. It’s also not
-	exactly a conventional novel. Its full title is an unwieldy mouthful: Diagnostic and Statistical
-	Manual of Mental Disorders, Fifth Edition . The author (or authors) writes under the ungainly nom de
-	plume of The American Psychiatric Association – although a list of enjoyably silly pseudonyms is
-	provided inside (including Maritza Rubio-Stipec, Dan Blazer, and the superbly alliterative Susan
-	--- more --- [enter to continue]
+Which article do you want to see? (1-25, or [enter] for none) 2
+                                December 5, 2013               ·                Lessig
+                              · Reblogged from  So the march is on. Fifteen years after
+                              Granny D started her march across the United States in the
+                              name of “campaign finance reform,” we will begin our march
+                              across New Hampshire (the long way), in the name of
+                              “corruption reform.” We’ve launched the #NHRebellion website
+                              . Check out the route, and think about what you can do. We
+                              need people to walk — 185 miles, in January, but we guarantee
+                              free coffee. Even if you can’t afford the 2 weeks it will
+                              take, you can sign up for any part. And best of all: Once you
+                              sign up, they give you this really cool URL so people can
+                              pledge to support you, which means supports the #NHRebellion,
+                              which means supports the next step to fixing this mess.
+                              Here’s my sponsorship link: bit.ly/SponsorLessig . here’s my
+                              “ please sponsor m e” request. Thanks to the Americans Who
+                              Tell The Truth project for permitting us to use the beautiful
+                              image of Granny D. And please do what you can to help spread
+                              the word. ( Original post on Tumblr)  No comments · Leave a
+                              comment · Permalink Tagged: no tags Categorized: Tumblr
 ```
 
-The output width is driven by the <tt>PREVIEW_COLS</tt> variable in the <tt>cmdlinenews.py</tt> file. To change the number of rows it displays before prompting for "<b>--- more ---</b>", change the <tt>PREVIEW_ROWS</tt> variable.
-
-Edit the <tt>sites.py</tt> interests dict with your favorite rss feeds for convenience. Check out <a href="http://www.wired.com/magazine/2013/08/101signals/" target="_blank">http://www.wired.com/magazine/2013/08/101signals/</a> for ideas of interesting sites.
+The output width is driven by [python curses](http://docs.python.org/2/library/curses.html) which determines the width of your terminal, and neatly formats the article text as a center column.
 
