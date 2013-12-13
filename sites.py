@@ -43,10 +43,10 @@ interests = {
     #                desc (default: None) }
 
     "hn"	:	{ "url": "https://news.ycombinator.com/rss",
-                          "desc": "Hacker News" }, 
+                          "desc": "Hacker News",
+                          "strip_url_parameters": False }, 
     "nyt"	:	{ "url": "http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
-                          "referrer": "https://twitter.com/nytimes",
-                          "strip_url_parameters": False },
+                          "referrer": "https://twitter.com/nytimes" },
     "bbc"	:	{ "url": "http://feeds.bbci.co.uk/news/rss.xml",
                           "desc": "BBC News" },
     "reddit"	:	{ "url": "http://reddit.com/r/technology+japan+aikido+dataisbeautiful/.rss",
