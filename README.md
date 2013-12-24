@@ -34,7 +34,32 @@ You will be greeted with this prompt:
 Which feed do you want to read? Input code (! for menu, [enter] to quit) 
 ```
 
-Type <tt>!</tt> to see the menu of feeds defined in the associated [sites.py](sites.py) interests dict, which produces a menu like this:
+Type <tt>!</tt> to see the menu of feeds defined either in the associated [sites.py](sites.py) interests dict (empty by default), or in a private, local file titled <tt>local_sites.py</tt> which is not checked into source control (this is an example of the django [local settings concept](https://djangosnippets.org/snippets/644/) applied to this project).
+
+For example, if the <tt>local_sites.py</tt> file contains the interests dict defined like this:
+
+```python
+interests = {
+    "hn" : { "url": "https://news.ycombinator.com/rss",
+             "desc": "Hacker News",
+              "strip_url_parameters": False }, 
+    "nyt" : { "url": "http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+              "desc": "NY Times Front Page",
+              "referrer": "https://twitter.com/nytimes" },
+    "bbc" : { "url": "http://feeds.bbci.co.uk/news/rss.xml",
+              "desc": "BBC News" },
+    "reddit" : { "url": "http://reddit.com/r/technology+japan+aikido+dataisbeautiful/.rss",
+                 "desc": "My Reddits (Tech, Japan, Aikido, Data is Beautiful)" },
+    "alpha" : { "url": "http://seekingalpha.com/tag/editors-picks.xml",
+                "desc": "Seeking Alpha Editor's Picks" },
+    "mta" : { "url": "http://rssitfor.me/getrss?name=FakeMTA",
+              "desc": "FakeMTA's tweets" },
+    "zerohedge" : { "url": "http://feeds.feedburner.com/zerohedge/feed",
+                    "desc": "ZeroHedge" },
+}
+```
+
+Then when cmdlinenews.py is run, it will produce a menu like this:
 
 ``` 
 Code       ==>  Description
@@ -43,14 +68,14 @@ Code       ==>  Description
 reddit     ==>  My Reddits (Tech, Japan, Aikido, Data is Beautiful)
 zerohedge  ==>  ZeroHedge
 bbc        ==>  BBC News
-nyt        ==>  http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml
+nyt        ==>  NY Times Front Page
 hn         ==>  Hacker News
 alpha      ==>  Seeking Alpha Editor's Picks
 mta        ==>  FakeMTA's tweets
 
 ```
 
-Edit the [sites.py](sites.py) interests dict with your favorite rss feeds for convenience. Check out <a href="http://www.wired.com/magazine/2013/08/101signals/" target="_blank">http://www.wired.com/magazine/2013/08/101signals/</a> for ideas of interesting sites.
+Edit either the [sites.py](sites.py) interests dict or create a <tt>local_sites.py</tt> file with the interests dict defined, using your favorite rss feeds for convenience. Check out <a href="http://www.wired.com/magazine/2014/08/101signals/" target="_blank">http://www.wired.com/magazine/2013/08/101signals</a> for ideas of interesting sites.
 
 Input the short name code of a feed defined in the associated [sites.py](sites.py) interests dict, and hit return. If the feed is available, you should see a text summary of each numbered entry and link.
 
