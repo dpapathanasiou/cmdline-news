@@ -42,19 +42,13 @@ interests = {
     #                referrer (default: None),
     #                desc (default: None) }
 
-    "hn"	:	{ "url": "https://news.ycombinator.com/rss",
-                          "desc": "Hacker News",
-                          "strip_url_parameters": False }, 
-    "nyt"	:	{ "url": "http://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
-                          "referrer": "https://twitter.com/nytimes" },
-    "bbc"	:	{ "url": "http://feeds.bbci.co.uk/news/rss.xml",
-                          "desc": "BBC News" },
-    "reddit"	:	{ "url": "http://reddit.com/r/technology+japan+aikido+dataisbeautiful/.rss",
-                          "desc": "My Reddits (Tech, Japan, Aikido, Data is Beautiful)" },
-    "alpha"	:	{ "url": "http://seekingalpha.com/tag/editors-picks.xml",
-                          "desc": "Seeking Alpha Editor's Picks" },
-    "mta"	:	{ "url": "http://rssitfor.me/getrss?name=FakeMTA",
-                          "desc": "FakeMTA's tweets" },
-    "zerohedge"	:	{ "url": "http://feeds.feedburner.com/zerohedge/feed",
-                          "desc": "ZeroHedge" },
+    # define all the feeds you normally read in
+    # local_sites.py which is localized/private
+    # configuration not part of this repo
+
 }
+
+try:
+    from local_sites import *
+except ImportError:
+    pass
